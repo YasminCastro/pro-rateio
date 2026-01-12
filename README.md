@@ -140,13 +140,6 @@ pro-rateio/
 └── public/                # Arquivos estáticos
 ```
 
-## 🔧 Personalização
-
-Os valores padrão das datas podem ser ajustados nos componentes:
-
-- **`components/add-person-dialog.tsx`**: Funções `getFirstDayOfMonth()` e `getLastDayOfMonth()`
-- **`components/add-bill-dialog.tsx`**: Funções `getFirstDayOfMonth()` e `getLastDayOfMonth()`
-
 ## 📝 Licença
 
 Este projeto é de uso pessoal.
