@@ -34,7 +34,7 @@ export function AddPersonDialog({ onAddPerson }: AddPersonDialogProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name.trim()) {
       return;
     }
@@ -76,12 +76,22 @@ export function AddPersonDialog({ onAddPerson }: AddPersonDialogProps) {
     setPeriods(periods.filter((p) => p.id !== id));
   };
 
-  const updatePeriod = (id: string, field: "startDate" | "endDate", value: string) => {
+  const updatePeriod = (
+    id: string,
+    field: "startDate" | "endDate",
+    value: string
+  ) => {
     setPeriods(
-      periods.map((p) =>
-        p.id === id ? { ...p, [field]: new Date(value) } : p
-      )
+      periods.map((p) => (p.id === id ? { ...p, [field]: new Date(value) } : p))
     );
+  };
+
+  // Função auxiliar para formatar data para input type="date"
+  const formatDateForInput = (date: Date): string => {
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+      return new Date().toISOString().split("T")[0];
+    }
+    return date.toISOString().split("T")[0];
   };
 
   return (
@@ -97,7 +107,8 @@ export function AddPersonDialog({ onAddPerson }: AddPersonDialogProps) {
           <DialogHeader>
             <DialogTitle>Adicionar Pessoa</DialogTitle>
             <DialogDescription>
-              Adicione uma pessoa e defina os períodos em que ela esteve presente.
+              Adicione uma pessoa e defina os períodos em que ela esteve
+              presente.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -115,7 +126,12 @@ export function AddPersonDialog({ onAddPerson }: AddPersonDialogProps) {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <Label>Períodos de Presença</Label>
-                <Button type="button" variant="outline" size="sm" onClick={addPeriod}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addPeriod}
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   Adicionar Período
                 </Button>
@@ -133,7 +149,7 @@ export function AddPersonDialog({ onAddPerson }: AddPersonDialogProps) {
                     <Input
                       id={`start-${period.id}`}
                       type="date"
-                      value={period.startDate.toISOString().split("T")[0]}
+                      value={formatDateForInput(period.startDate)}
                       onChange={(e) =>
                         updatePeriod(period.id, "startDate", e.target.value)
                       }
@@ -148,7 +164,7 @@ export function AddPersonDialog({ onAddPerson }: AddPersonDialogProps) {
                       <Input
                         id={`end-${period.id}`}
                         type="date"
-                        value={period.endDate.toISOString().split("T")[0]}
+                        value={formatDateForInput(period.endDate)}
                         onChange={(e) =>
                           updatePeriod(period.id, "endDate", e.target.value)
                         }
@@ -171,7 +187,11 @@ export function AddPersonDialog({ onAddPerson }: AddPersonDialogProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
               Cancelar
             </Button>
             <Button type="submit">Adicionar</Button>

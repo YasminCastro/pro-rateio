@@ -1,12 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Person, Bill, BillCalculation } from "@/lib/types";
 import { calculateBill } from "@/lib/calculations";
+import { savePeople, loadPeople, saveBills, loadBills } from "@/lib/storage";
 import { AddPersonDialog } from "@/components/add-person-dialog";
 import { AddBillDialog } from "@/components/add-bill-dialog";
 import { BillCalculationCard } from "@/components/bill-calculation-card";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2, Users, Receipt } from "lucide-react";
 
@@ -14,38 +21,71 @@ export default function Home() {
   const [people, setPeople] = useState<Person[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
   const [calculations, setCalculations] = useState<BillCalculation[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Carregar dados do localStorage ao montar o componente
+  useEffect(() => {
+    const loadedPeople = loadPeople();
+    const loadedBills = loadBills();
+
+    setPeople(loadedPeople);
+    setBills(loadedBills);
+    setIsInitialized(true);
+  }, []);
+
+  // Salvar pessoas no localStorage sempre que mudarem (após inicialização)
+  useEffect(() => {
+    if (isInitialized) {
+      savePeople(people);
+    }
+  }, [people, isInitialized]);
+
+  // Salvar contas no localStorage sempre que mudarem (após inicialização)
+  useEffect(() => {
+    if (isInitialized) {
+      saveBills(bills);
+    }
+  }, [bills, isInitialized]);
+
+  const recalculateAll = useCallback(
+    (currentBills?: Bill[], currentPeople?: Person[]) => {
+      const billsToUse = currentBills ?? bills;
+      const peopleToUse = currentPeople ?? people;
+
+      if (billsToUse.length === 0 || peopleToUse.length === 0) {
+        setCalculations([]);
+        return;
+      }
+
+      const newCalculations = billsToUse.map((bill) =>
+        calculateBill(bill, peopleToUse)
+      );
+      setCalculations(newCalculations);
+    },
+    [bills, people]
+  );
+
+  // Recalcular quando pessoas ou contas mudarem (após inicialização)
+  useEffect(() => {
+    if (isInitialized) {
+      recalculateAll();
+    }
+  }, [people, bills, isInitialized, recalculateAll]);
 
   const handleAddPerson = (person: Person) => {
     setPeople([...people, person]);
-    recalculateAll();
   };
 
   const handleAddBill = (bill: Bill) => {
-    const newBills = [...bills, bill];
-    setBills(newBills);
-    recalculateAll(newBills);
+    setBills([...bills, bill]);
   };
 
   const handleRemovePerson = (personId: string) => {
-    const newPeople = people.filter((p) => p.id !== personId);
-    setPeople(newPeople);
-    recalculateAll(undefined, newPeople);
+    setPeople(people.filter((p) => p.id !== personId));
   };
 
   const handleRemoveBill = (billId: string) => {
-    const newBills = bills.filter((b) => b.id !== billId);
-    setBills(newBills);
-    recalculateAll(newBills);
-  };
-
-  const recalculateAll = (currentBills?: Bill[], currentPeople?: Person[]) => {
-    const billsToUse = currentBills ?? bills;
-    const peopleToUse = currentPeople ?? people;
-
-    const newCalculations = billsToUse.map((bill) =>
-      calculateBill(bill, peopleToUse)
-    );
-    setCalculations(newCalculations);
+    setBills(bills.filter((b) => b.id !== billId));
   };
 
   return (
@@ -56,7 +96,8 @@ export default function Home() {
             Pro Rateio
           </h1>
           <p className="text-zinc-600 dark:text-zinc-400">
-            Divida contas proporcionalmente pelo tempo que cada pessoa ficou presente
+            Divida contas proporcionalmente pelo tempo que cada pessoa ficou
+            presente
           </p>
         </div>
 
@@ -71,7 +112,8 @@ export default function Home() {
                 <AddPersonDialog onAddPerson={handleAddPerson} />
               </div>
               <CardDescription>
-                Adicione as pessoas e os períodos em que cada uma esteve presente
+                Adicione as pessoas e os períodos em que cada uma esteve
+                presente
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -117,7 +159,8 @@ export default function Home() {
                 <AddBillDialog onAddBill={handleAddBill} />
               </div>
               <CardDescription>
-                Adicione as contas que precisam ser divididas (água, energia, etc.)
+                Adicione as contas que precisam ser divididas (água, energia,
+                etc.)
               </CardDescription>
             </CardHeader>
             <CardContent>
