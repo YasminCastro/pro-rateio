@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2, Users, Receipt } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function Home() {
   const [people, setPeople] = useState<Person[]>([]);
@@ -179,8 +181,8 @@ export default function Home() {
                         <p className="font-medium">{bill.name}</p>
                         <p className="text-sm text-zinc-500 dark:text-zinc-400">
                           R$ {bill.amount.toFixed(2)} •{" "}
-                          {bill.startDate.toLocaleDateString("pt-BR")} até{" "}
-                          {bill.endDate.toLocaleDateString("pt-BR")}
+                          {format(bill.startDate, "dd/MM/yyyy", { locale: ptBR })} até{" "}
+                          {format(bill.endDate, "dd/MM/yyyy", { locale: ptBR })}
                         </p>
                       </div>
                       <Button

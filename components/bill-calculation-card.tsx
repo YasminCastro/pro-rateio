@@ -12,6 +12,8 @@ import {
 import { BillCalculation } from "@/lib/types";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface BillCalculationCardProps {
   calculation: BillCalculation;
@@ -33,8 +35,8 @@ export function BillCalculationCard({
           <div>
             <CardTitle>{bill.name}</CardTitle>
             <CardDescription>
-              Período: {bill.startDate.toLocaleDateString("pt-BR")} até{" "}
-              {bill.endDate.toLocaleDateString("pt-BR")} ({totalDays} dias)
+              Período: {format(bill.startDate, "dd/MM/yyyy", { locale: ptBR })} até{" "}
+              {format(bill.endDate, "dd/MM/yyyy", { locale: ptBR })} ({totalDays} dias)
             </CardDescription>
           </div>
           <Button variant="ghost" size="sm" onClick={onRemove}>

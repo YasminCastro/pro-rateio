@@ -1,4 +1,5 @@
 import { Person, Bill } from "./types";
+import { formatISO, parseISO, isValid } from "date-fns";
 
 const STORAGE_KEYS = {
   PEOPLE: "pro-rateio-people",
@@ -12,8 +13,8 @@ export function savePeople(people: Person[]): void {
         ...person,
         periods: person.periods.map((period) => ({
           ...period,
-          startDate: period.startDate.toISOString(),
-          endDate: period.endDate.toISOString(),
+          startDate: formatISO(period.startDate),
+          endDate: formatISO(period.endDate),
         })),
       }))
     );
@@ -32,14 +33,14 @@ export function loadPeople(): Person[] {
     return data.map((person: any) => ({
       ...person,
       periods: person.periods.map((period: any) => {
-        const startDate = new Date(period.startDate);
-        const endDate = new Date(period.endDate);
+        const startDate = parseISO(period.startDate);
+        const endDate = parseISO(period.endDate);
 
         // Validar se as datas são válidas
         return {
           ...period,
-          startDate: isNaN(startDate.getTime()) ? new Date() : startDate,
-          endDate: isNaN(endDate.getTime()) ? new Date() : endDate,
+          startDate: isValid(startDate) ? startDate : new Date(),
+          endDate: isValid(endDate) ? endDate : new Date(),
         };
       }),
     }));
@@ -54,8 +55,8 @@ export function saveBills(bills: Bill[]): void {
     const serialized = JSON.stringify(
       bills.map((bill) => ({
         ...bill,
-        startDate: bill.startDate.toISOString(),
-        endDate: bill.endDate.toISOString(),
+        startDate: formatISO(bill.startDate),
+        endDate: formatISO(bill.endDate),
       }))
     );
     localStorage.setItem(STORAGE_KEYS.BILLS, serialized);
@@ -71,14 +72,14 @@ export function loadBills(): Bill[] {
 
     const data = JSON.parse(stored);
     return data.map((bill: any) => {
-      const startDate = new Date(bill.startDate);
-      const endDate = new Date(bill.endDate);
+      const startDate = parseISO(bill.startDate);
+      const endDate = parseISO(bill.endDate);
 
       // Validar se as datas são válidas
       return {
         ...bill,
-        startDate: isNaN(startDate.getTime()) ? new Date() : startDate,
-        endDate: isNaN(endDate.getTime()) ? new Date() : endDate,
+        startDate: isValid(startDate) ? startDate : new Date(),
+        endDate: isValid(endDate) ? endDate : new Date(),
       };
     });
   } catch (error) {

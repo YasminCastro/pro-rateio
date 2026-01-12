@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,9 +16,25 @@ import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import { Bill } from "@/lib/types";
 import { generateId } from "@/lib/id";
+import { startOfMonth, endOfMonth, format, parseISO } from "date-fns";
 
 interface AddBillDialogProps {
   onAddBill: (bill: Bill) => void;
+}
+
+// Função auxiliar para obter o primeiro dia do mês atual
+function getFirstDayOfMonth(): Date {
+  return startOfMonth(new Date());
+}
+
+// Função auxiliar para obter o último dia do mês atual
+function getLastDayOfMonth(): Date {
+  return endOfMonth(new Date());
+}
+
+// Função auxiliar para formatar data para input type="date"
+function formatDateForInput(date: Date): string {
+  return format(date, "yyyy-MM-dd");
 }
 
 export function AddBillDialog({ onAddBill }: AddBillDialogProps) {
@@ -26,11 +42,21 @@ export function AddBillDialog({ onAddBill }: AddBillDialogProps) {
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [startDate, setStartDate] = useState(
-    new Date().toISOString().split("T")[0]
+    formatDateForInput(getFirstDayOfMonth())
   );
   const [endDate, setEndDate] = useState(
-    new Date().toISOString().split("T")[0]
+    formatDateForInput(getLastDayOfMonth())
   );
+
+  // Resetar campos quando o diálogo é aberto para usar as datas do mês atual
+  useEffect(() => {
+    if (open) {
+      setName("");
+      setAmount("");
+      setStartDate(formatDateForInput(getFirstDayOfMonth()));
+      setEndDate(formatDateForInput(getLastDayOfMonth()));
+    }
+  }, [open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,15 +69,15 @@ export function AddBillDialog({ onAddBill }: AddBillDialogProps) {
       id: generateId(),
       name: name.trim(),
       amount: parseFloat(amount),
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: parseISO(startDate),
+      endDate: parseISO(endDate),
     };
 
     onAddBill(bill);
     setName("");
     setAmount("");
-    setStartDate(new Date().toISOString().split("T")[0]);
-    setEndDate(new Date().toISOString().split("T")[0]);
+    setStartDate(formatDateForInput(getFirstDayOfMonth()));
+    setEndDate(formatDateForInput(getLastDayOfMonth()));
     setOpen(false);
   };
 

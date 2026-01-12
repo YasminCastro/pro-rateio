@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,21 +16,43 @@ import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import { Person, Period } from "@/lib/types";
 import { generateId } from "@/lib/id";
+import { startOfMonth, endOfMonth, format, parseISO, isValid } from "date-fns";
 
 interface AddPersonDialogProps {
   onAddPerson: (person: Person) => void;
 }
 
+// Função auxiliar para obter o primeiro dia do mês atual
+function getFirstDayOfMonth(): Date {
+  return startOfMonth(new Date());
+}
+
+// Função auxiliar para obter o último dia do mês atual
+function getLastDayOfMonth(): Date {
+  return endOfMonth(new Date());
+}
+
+// Função auxiliar para criar um novo período com datas padrão
+function createDefaultPeriod(): Period {
+  return {
+    id: generateId(),
+    startDate: getFirstDayOfMonth(),
+    endDate: getLastDayOfMonth(),
+  };
+}
+
 export function AddPersonDialog({ onAddPerson }: AddPersonDialogProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [periods, setPeriods] = useState<Period[]>([
-    {
-      id: crypto.randomUUID(),
-      startDate: new Date(),
-      endDate: new Date(),
-    },
-  ]);
+  const [periods, setPeriods] = useState<Period[]>([createDefaultPeriod()]);
+
+  // Resetar períodos quando o diálogo é aberto para usar as datas do mês atual
+  useEffect(() => {
+    if (open) {
+      setName("");
+      setPeriods([createDefaultPeriod()]);
+    }
+  }, [open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,32 +66,19 @@ export function AddPersonDialog({ onAddPerson }: AddPersonDialogProps) {
       name: name.trim(),
       periods: periods.map((p) => ({
         ...p,
-        startDate: new Date(p.startDate),
-        endDate: new Date(p.endDate),
+        startDate: p.startDate instanceof Date ? p.startDate : parseISO(p.startDate as any),
+        endDate: p.endDate instanceof Date ? p.endDate : parseISO(p.endDate as any),
       })),
     };
 
     onAddPerson(person);
     setName("");
-    setPeriods([
-      {
-        id: generateId(),
-        startDate: new Date(),
-        endDate: new Date(),
-      },
-    ]);
+    setPeriods([createDefaultPeriod()]);
     setOpen(false);
   };
 
   const addPeriod = () => {
-    setPeriods([
-      ...periods,
-      {
-        id: generateId(),
-        startDate: new Date(),
-        endDate: new Date(),
-      },
-    ]);
+    setPeriods([...periods, createDefaultPeriod()]);
   };
 
   const removePeriod = (id: string) => {
@@ -82,16 +91,16 @@ export function AddPersonDialog({ onAddPerson }: AddPersonDialogProps) {
     value: string
   ) => {
     setPeriods(
-      periods.map((p) => (p.id === id ? { ...p, [field]: new Date(value) } : p))
+      periods.map((p) => (p.id === id ? { ...p, [field]: parseISO(value) } : p))
     );
   };
 
   // Função auxiliar para formatar data para input type="date"
   const formatDateForInput = (date: Date): string => {
-    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
-      return new Date().toISOString().split("T")[0];
+    if (!date || !isValid(date)) {
+      return format(new Date(), "yyyy-MM-dd");
     }
-    return date.toISOString().split("T")[0];
+    return format(date, "yyyy-MM-dd");
   };
 
   return (

@@ -1,18 +1,23 @@
 import { Person, Bill, BillCalculation, PersonShare } from "./types";
+import {
+  differenceInCalendarDays,
+  isAfter,
+  isBefore,
+  isEqual,
+  max,
+  min,
+  startOfDay,
+} from "date-fns";
 
 /**
  * Calcula o número de dias entre duas datas (inclusive)
  */
 export function calculateDaysBetween(startDate: Date, endDate: Date): number {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  start.setHours(0, 0, 0, 0);
-  end.setHours(0, 0, 0, 0);
+  const start = startOfDay(startDate);
+  const end = startOfDay(endDate);
   
-  const diffTime = end.getTime() - start.getTime();
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-  
-  return diffDays;
+  // differenceInCalendarDays retorna a diferença, então adicionamos 1 para incluir ambos os dias
+  return differenceInCalendarDays(end, start) + 1;
 }
 
 /**
@@ -24,7 +29,11 @@ function datesOverlap(
   start2: Date,
   end2: Date
 ): boolean {
-  return start1 <= end2 && start2 <= end1;
+  // Dois períodos se sobrepõem se: start1 <= end2 && start2 <= end1
+  return (
+    (isBefore(start1, end2) || isEqual(start1, end2)) &&
+    (isBefore(start2, end1) || isEqual(start2, end1))
+  );
 }
 
 /**
@@ -40,8 +49,8 @@ function getPeriodIntersection(
     return null;
   }
 
-  const start = new Date(Math.max(start1.getTime(), start2.getTime()));
-  const end = new Date(Math.min(end1.getTime(), end2.getTime()));
+  const start = max([start1, start2]);
+  const end = min([end1, end2]);
 
   return { start, end };
 }
