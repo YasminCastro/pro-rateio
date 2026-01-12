@@ -1,6 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -35,8 +41,9 @@ export function BillCalculationCard({
           <div>
             <CardTitle>{bill.name}</CardTitle>
             <CardDescription>
-              Período: {format(bill.startDate, "dd/MM/yyyy", { locale: ptBR })} até{" "}
-              {format(bill.endDate, "dd/MM/yyyy", { locale: ptBR })} ({totalDays} dias)
+              Período: {format(bill.startDate, "dd/MM/yyyy", { locale: ptBR })}{" "}
+              até {format(bill.endDate, "dd/MM/yyyy", { locale: ptBR })} (
+              {totalDays} dias)
             </CardDescription>
           </div>
           <Button variant="ghost" size="sm" onClick={onRemove}>
@@ -63,7 +70,9 @@ export function BillCalculationCard({
           <TableBody>
             {personShares.map((share) => (
               <TableRow key={share.personId}>
-                <TableCell className="font-medium">{share.personName}</TableCell>
+                <TableCell className="font-medium">
+                  {share.personName}
+                </TableCell>
                 <TableCell className="text-right">{share.days}</TableCell>
                 <TableCell className="text-right">
                   {share.percentage.toFixed(2)}%
@@ -75,9 +84,7 @@ export function BillCalculationCard({
             ))}
             <TableRow className="font-semibold">
               <TableCell>Total</TableCell>
-              <TableCell className="text-right">
-                {personShares.reduce((sum, p) => sum + p.days, 0)}
-              </TableCell>
+              <TableCell className="text-right">{totalDays}</TableCell>
               <TableCell className="text-right">100%</TableCell>
               <TableCell className="text-right">
                 R$ {totalShare.toFixed(2)}

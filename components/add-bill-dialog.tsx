@@ -13,13 +13,17 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { Bill } from "@/lib/types";
 import { generateId } from "@/lib/id";
 import { startOfMonth, endOfMonth, format, parseISO } from "date-fns";
 
 interface AddBillDialogProps {
   onAddBill: (bill: Bill) => void;
+  billToEdit?: Bill;
+  onEditBill?: (bill: Bill) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 // Função auxiliar para obter o primeiro dia do mês atual
@@ -37,8 +41,14 @@ function formatDateForInput(date: Date): string {
   return format(date, "yyyy-MM-dd");
 }
 
-export function AddBillDialog({ onAddBill }: AddBillDialogProps) {
-  const [open, setOpen] = useState(false);
+export function AddBillDialog({
+  onAddBill,
+  billToEdit,
+  onEditBill,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: AddBillDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [startDate, setStartDate] = useState(
@@ -47,16 +57,30 @@ export function AddBillDialog({ onAddBill }: AddBillDialogProps) {
   const [endDate, setEndDate] = useState(
     formatDateForInput(getLastDayOfMonth())
   );
+  const isEditMode = !!billToEdit;
 
-  // Resetar campos quando o diálogo é aberto para usar as datas do mês atual
+  // Usar estado controlado se fornecido, caso contrário usar estado interno
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = controlledOnOpenChange || setInternalOpen;
+
+  // Resetar ou carregar dados quando o diálogo é aberto
   useEffect(() => {
     if (open) {
-      setName("");
-      setAmount("");
-      setStartDate(formatDateForInput(getFirstDayOfMonth()));
-      setEndDate(formatDateForInput(getLastDayOfMonth()));
+      if (billToEdit) {
+        // Modo de edição: carregar dados da conta
+        setName(billToEdit.name);
+        setAmount(billToEdit.amount.toString());
+        setStartDate(formatDateForInput(billToEdit.startDate));
+        setEndDate(formatDateForInput(billToEdit.endDate));
+      } else {
+        // Modo de adição: resetar para valores padrão
+        setName("");
+        setAmount("");
+        setStartDate(formatDateForInput(getFirstDayOfMonth()));
+        setEndDate(formatDateForInput(getLastDayOfMonth()));
+      }
     }
-  }, [open]);
+  }, [open, billToEdit]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,14 +90,19 @@ export function AddBillDialog({ onAddBill }: AddBillDialogProps) {
     }
 
     const bill: Bill = {
-      id: generateId(),
+      id: isEditMode ? billToEdit!.id : generateId(),
       name: name.trim(),
       amount: parseFloat(amount),
       startDate: parseISO(startDate),
       endDate: parseISO(endDate),
     };
 
-    onAddBill(bill);
+    if (isEditMode && onEditBill) {
+      onEditBill(bill);
+    } else {
+      onAddBill(bill);
+    }
+
     setName("");
     setAmount("");
     setStartDate(formatDateForInput(getFirstDayOfMonth()));
@@ -83,18 +112,29 @@ export function AddBillDialog({ onAddBill }: AddBillDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Adicionar Conta
+      {!isEditMode && (
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Adicionar Conta
+          </Button>
+        </DialogTrigger>
+      )}
+      {isEditMode && (
+        <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+          <Pencil className="h-4 w-4" />
         </Button>
-      </DialogTrigger>
+      )}
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Adicionar Conta</DialogTitle>
+            <DialogTitle>
+              {isEditMode ? "Editar Conta" : "Adicionar Conta"}
+            </DialogTitle>
             <DialogDescription>
-              Adicione uma conta (água, energia, etc.) para calcular o rateio.
+              {isEditMode
+                ? "Edite os dados da conta para recalcular o rateio."
+                : "Adicione uma conta (água, energia, etc.) para calcular o rateio."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -150,7 +190,7 @@ export function AddBillDialog({ onAddBill }: AddBillDialogProps) {
             >
               Cancelar
             </Button>
-            <Button type="submit">Adicionar</Button>
+            <Button type="submit">{isEditMode ? "Salvar" : "Adicionar"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -13,13 +13,17 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { Person, Period } from "@/lib/types";
 import { generateId } from "@/lib/id";
 import { startOfMonth, endOfMonth, format, parseISO, isValid } from "date-fns";
 
 interface AddPersonDialogProps {
   onAddPerson: (person: Person) => void;
+  personToEdit?: Person;
+  onEditPerson?: (person: Person) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 // Função auxiliar para obter o primeiro dia do mês atual
@@ -41,18 +45,42 @@ function createDefaultPeriod(): Period {
   };
 }
 
-export function AddPersonDialog({ onAddPerson }: AddPersonDialogProps) {
-  const [open, setOpen] = useState(false);
+export function AddPersonDialog({ 
+  onAddPerson, 
+  personToEdit, 
+  onEditPerson,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange
+}: AddPersonDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [name, setName] = useState("");
   const [periods, setPeriods] = useState<Period[]>([createDefaultPeriod()]);
+  const isEditMode = !!personToEdit;
+  
+  // Usar estado controlado se fornecido, caso contrário usar estado interno
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = controlledOnOpenChange || setInternalOpen;
 
-  // Resetar períodos quando o diálogo é aberto para usar as datas do mês atual
+  // Resetar ou carregar dados quando o diálogo é aberto
   useEffect(() => {
     if (open) {
-      setName("");
-      setPeriods([createDefaultPeriod()]);
+      if (personToEdit) {
+        // Modo de edição: carregar dados da pessoa
+        setName(personToEdit.name);
+        setPeriods(
+          personToEdit.periods.map((period) => ({
+            ...period,
+            startDate: period.startDate instanceof Date ? period.startDate : parseISO(period.startDate as any),
+            endDate: period.endDate instanceof Date ? period.endDate : parseISO(period.endDate as any),
+          }))
+        );
+      } else {
+        // Modo de adição: resetar para valores padrão
+        setName("");
+        setPeriods([createDefaultPeriod()]);
+      }
     }
-  }, [open]);
+  }, [open, personToEdit]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +90,7 @@ export function AddPersonDialog({ onAddPerson }: AddPersonDialogProps) {
     }
 
     const person: Person = {
-      id: generateId(),
+      id: isEditMode ? personToEdit!.id : generateId(),
       name: name.trim(),
       periods: periods.map((p) => ({
         ...p,
@@ -71,7 +99,12 @@ export function AddPersonDialog({ onAddPerson }: AddPersonDialogProps) {
       })),
     };
 
-    onAddPerson(person);
+    if (isEditMode && onEditPerson) {
+      onEditPerson(person);
+    } else {
+      onAddPerson(person);
+    }
+    
     setName("");
     setPeriods([createDefaultPeriod()]);
     setOpen(false);
@@ -105,19 +138,31 @@ export function AddPersonDialog({ onAddPerson }: AddPersonDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Adicionar Pessoa
+      {!isEditMode && (
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Adicionar Pessoa
+          </Button>
+        </DialogTrigger>
+      )}
+      {isEditMode && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setOpen(true)}
+        >
+          <Pencil className="h-4 w-4" />
         </Button>
-      </DialogTrigger>
+      )}
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Adicionar Pessoa</DialogTitle>
+            <DialogTitle>{isEditMode ? "Editar Pessoa" : "Adicionar Pessoa"}</DialogTitle>
             <DialogDescription>
-              Adicione uma pessoa e defina os períodos em que ela esteve
-              presente.
+              {isEditMode
+                ? "Edite os dados da pessoa e os períodos em que ela esteve presente."
+                : "Adicione uma pessoa e defina os períodos em que ela esteve presente."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -203,7 +248,7 @@ export function AddPersonDialog({ onAddPerson }: AddPersonDialogProps) {
             >
               Cancelar
             </Button>
-            <Button type="submit">Adicionar</Button>
+            <Button type="submit">{isEditMode ? "Salvar" : "Adicionar"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

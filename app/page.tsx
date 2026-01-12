@@ -15,9 +15,88 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, Users, Receipt } from "lucide-react";
+import { Trash2, Users, Receipt, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+// Componente para item de pessoa com botão de editar
+function PersonItem({
+  person,
+  onEdit,
+  onRemove,
+  onAddPerson,
+}: {
+  person: Person;
+  onEdit: (person: Person) => void;
+  onRemove: (id: string) => void;
+  onAddPerson: (person: Person) => void;
+}) {
+  const [editOpen, setEditOpen] = useState(false);
+
+  return (
+    <div className="flex items-center justify-between p-3 border rounded-lg">
+      <div>
+        <p className="font-medium">{person.name}</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          {person.periods.length} período
+          {person.periods.length !== 1 ? "s" : ""}
+        </p>
+      </div>
+      <div className="flex gap-2">
+        <AddPersonDialog
+          personToEdit={person}
+          onEditPerson={onEdit}
+          onAddPerson={onAddPerson}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+        />
+        <Button variant="ghost" size="sm" onClick={() => onRemove(person.id)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// Componente para item de conta com botão de editar
+function BillItem({
+  bill,
+  onEdit,
+  onRemove,
+  onAddBill,
+}: {
+  bill: Bill;
+  onEdit: (bill: Bill) => void;
+  onRemove: (id: string) => void;
+  onAddBill: (bill: Bill) => void;
+}) {
+  const [editOpen, setEditOpen] = useState(false);
+
+  return (
+    <div className="flex items-center justify-between p-3 border rounded-lg">
+      <div>
+        <p className="font-medium">{bill.name}</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          R$ {bill.amount.toFixed(2)} •{" "}
+          {format(bill.startDate, "dd/MM/yyyy", { locale: ptBR })} até{" "}
+          {format(bill.endDate, "dd/MM/yyyy", { locale: ptBR })}
+        </p>
+      </div>
+      <div className="flex gap-2">
+        <AddBillDialog
+          billToEdit={bill}
+          onEditBill={onEdit}
+          onAddBill={onAddBill}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+        />
+        <Button variant="ghost" size="sm" onClick={() => onRemove(bill.id)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const [people, setPeople] = useState<Person[]>([]);
@@ -86,8 +165,18 @@ export default function Home() {
     setPeople(people.filter((p) => p.id !== personId));
   };
 
+  const handleUpdatePerson = (updatedPerson: Person) => {
+    setPeople(
+      people.map((p) => (p.id === updatedPerson.id ? updatedPerson : p))
+    );
+  };
+
   const handleRemoveBill = (billId: string) => {
     setBills(bills.filter((b) => b.id !== billId));
+  };
+
+  const handleUpdateBill = (updatedBill: Bill) => {
+    setBills(bills.map((b) => (b.id === updatedBill.id ? updatedBill : b)));
   };
 
   return (
@@ -126,25 +215,13 @@ export default function Home() {
               ) : (
                 <div className="space-y-2">
                   {people.map((person) => (
-                    <div
+                    <PersonItem
                       key={person.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium">{person.name}</p>
-                        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                          {person.periods.length} período
-                          {person.periods.length !== 1 ? "s" : ""}
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemovePerson(person.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                      person={person}
+                      onEdit={handleUpdatePerson}
+                      onRemove={handleRemovePerson}
+                      onAddPerson={handleAddPerson}
+                    />
                   ))}
                 </div>
               )}
@@ -173,26 +250,13 @@ export default function Home() {
               ) : (
                 <div className="space-y-2">
                   {bills.map((bill) => (
-                    <div
+                    <BillItem
                       key={bill.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium">{bill.name}</p>
-                        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                          R$ {bill.amount.toFixed(2)} •{" "}
-                          {format(bill.startDate, "dd/MM/yyyy", { locale: ptBR })} até{" "}
-                          {format(bill.endDate, "dd/MM/yyyy", { locale: ptBR })}
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveBill(bill.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                      bill={bill}
+                      onEdit={handleUpdateBill}
+                      onRemove={handleRemoveBill}
+                      onAddBill={handleAddBill}
+                    />
                   ))}
                 </div>
               )}
