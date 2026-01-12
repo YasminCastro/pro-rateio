@@ -197,41 +197,6 @@ export default function Home() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  <CardTitle>Pessoas</CardTitle>
-                </div>
-                <AddPersonDialog onAddPerson={handleAddPerson} />
-              </div>
-              <CardDescription>
-                Adicione as pessoas e os períodos em que cada uma esteve
-                presente
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {people.length === 0 ? (
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-4">
-                  Nenhuma pessoa adicionada ainda
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {people.map((person) => (
-                    <PersonItem
-                      key={person.id}
-                      person={person}
-                      onEdit={handleUpdatePerson}
-                      onRemove={handleRemovePerson}
-                      onAddPerson={handleAddPerson}
-                    />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
                   <Receipt className="h-5 w-5" />
                   <CardTitle>Contas</CardTitle>
                 </div>
@@ -256,6 +221,41 @@ export default function Home() {
                       onEdit={handleUpdateBill}
                       onRemove={handleRemoveBill}
                       onAddBill={handleAddBill}
+                    />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  <CardTitle>Pessoas</CardTitle>
+                </div>
+                <AddPersonDialog onAddPerson={handleAddPerson} />
+              </div>
+              <CardDescription>
+                Adicione as pessoas e os períodos em que cada uma esteve
+                presente
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {people.length === 0 ? (
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-4">
+                  Nenhuma pessoa adicionada ainda
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {people.map((person) => (
+                    <PersonItem
+                      key={person.id}
+                      person={person}
+                      onEdit={handleUpdatePerson}
+                      onRemove={handleRemovePerson}
+                      onAddPerson={handleAddPerson}
                     />
                   ))}
                 </div>
